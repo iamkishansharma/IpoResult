@@ -12,15 +12,21 @@ import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
+import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.textfield.TextInputEditText
 import com.heycode.iporesult.R
+import com.heycode.iporesult.adapters.BoidAdapter
 import com.heycode.iporesult.databinding.ActivityMainBinding
 import com.heycode.iporesult.models.CaptchaData
 import com.heycode.iporesult.models.CheckData
 import com.heycode.iporesult.models.CompanyShare
+import com.heycode.iporesult.utils.USER_BOID_SET
+import com.heycode.iporesult.utils.dataFromSharedPref
+import com.heycode.iporesult.utils.editorFromSharedPref
 import com.heycode.iporesult.utils.hasInternetConnection
 import com.heycode.iporesult.viewmodels.HomeViewModel
 import dagger.hilt.android.AndroidEntryPoint
@@ -28,9 +34,10 @@ import kotlinx.coroutines.launch
 
 
 @AndroidEntryPoint
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), BoidAdapter.OnItemClickListener {
     private lateinit var binding: ActivityMainBinding
     private val homeViewModel: HomeViewModel by viewModels()
+    private var storedBoids: MutableSet<String> = mutableSetOf()
 
     private lateinit var companies: List<CompanyShare>
     private var compNames: ArrayList<String> = ArrayList()
@@ -50,7 +57,7 @@ class MainActivity : AppCompatActivity() {
             binding.apply {
                 pbLoading.visibility = View.GONE
                 btnSubmit.visibility = View.GONE
-                cvMainContainer.visibility = View.GONE
+                svMainContainer.visibility = View.GONE
                 clError.visibility = View.VISIBLE
                 btnRetryError.setOnClickListener {
                     finish()
@@ -58,6 +65,30 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         } else {
+            if (dataFromSharedPref(this@MainActivity)
+                    .getStringSet(USER_BOID_SET, null) != null
+            ) {
+                storedBoids = dataFromSharedPref(this@MainActivity)
+                    .getStringSet(USER_BOID_SET, null) as MutableSet<String>
+
+
+//    storedBoids = arrayOf("1301630000134578","1301590000282887")
+                binding.apply {
+                    if (storedBoids.isNotEmpty()) {
+                        rvSavedBoid.apply {
+                            val myAdapter =
+                                BoidAdapter(storedBoids.toTypedArray(), this@MainActivity)
+                            adapter = myAdapter
+                            layoutManager = LinearLayoutManager(this@MainActivity)
+                        }
+                    } else {
+                        Toast.makeText(this@MainActivity, "Can not load data", Toast.LENGTH_SHORT)
+                            .show()
+                    }
+                }
+            }
+
+
             lifecycleScope.launch {
                 homeViewModel.getHome()
                 homeViewModel.homeContent.observe(this@MainActivity) { data ->
@@ -67,7 +98,7 @@ class MainActivity : AppCompatActivity() {
                         clError.visibility = View.GONE
                         pbLoading.visibility = View.GONE
                         btnSubmit.visibility = View.VISIBLE
-                        cvMainContainer.visibility = View.VISIBLE
+                        svMainContainer.visibility = View.VISIBLE
                     }
 
                     // get names
@@ -83,11 +114,9 @@ class MainActivity : AppCompatActivity() {
                     binding.actMainSelect.apply {
                         setAdapter(ad)
                     }
-
                     // set captcha
                     setCaptcha(captchaData.captcha)
                 }
-
             }
 
             binding.apply {
@@ -105,22 +134,35 @@ class MainActivity : AppCompatActivity() {
                         Log.d("JsonData", json.toString())
                         lifecycleScope.launch {
                             binding.pbLoading.visibility = View.VISIBLE
-                            binding.cvMainContainer.visibility = View.GONE
+                            binding.svMainContainer.visibility = View.GONE
                             binding.btnSubmit.visibility = View.GONE
                             homeViewModel.checkResult(json)
 
-                            showAlertDialog(
-                                this@MainActivity,
-                                homeViewModel.message.value.toString()
-                            )
-
+                            val msg = homeViewModel.message.value.toString()
+                            startActivity(
+                                Intent(this@MainActivity, ResultActivity::class.java)
+                                    .apply {
+                                        putExtra(
+                                            "msg",
+                                            msg
+                                        )
+                                        putExtra("boid", json.boid)
+                                    })
+                            finish()
                         }
                     }
                 }
             }
         }
+    }
 
+    override fun onItemClick(position: Int) {
+        Toast.makeText(this, "hhhhh", Toast.LENGTH_SHORT).show()
+        binding.tietBoid.setText(storedBoids.toTypedArray()[position])
+    }
 
+    override fun onItemLongClick(position: Int) {
+        onLongClick(position)
     }
 
     private fun hasError(
@@ -162,28 +204,6 @@ class MainActivity : AppCompatActivity() {
         return false
     }
 
-    private fun showAlertDialog(context: Context, message: String) {
-        binding.pbLoading.visibility = View.GONE
-        val builder = AlertDialog.Builder(context)
-        //set title for alert dialog
-        builder.setTitle("Result")
-        //set message for alert dialog
-        builder.setMessage(message)
-        builder.setIcon(android.R.drawable.ic_dialog_alert)
-        //performing negative action
-        builder.setNegativeButton("OK") { _, _ ->
-            finish()
-//            dialogInterface.dismiss()
-            startActivity(Intent(this@MainActivity, MainActivity::class.java))
-        }
-        // Create the AlertDialog
-        val alertDialog: AlertDialog = builder.create()
-        // Set other dialog properties
-        alertDialog.setCancelable(false)
-        alertDialog.show()
-    }
-
-
     private fun setCaptcha(imageString: String) {
         val imageBytes = Base64.decode(imageString, Base64.DEFAULT)
         val decodedImage = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
@@ -208,9 +228,39 @@ class MainActivity : AppCompatActivity() {
             .create()
     }
 
-    fun View.hideKeyboard() {
+    private fun View.hideKeyboard() {
         val inputManager =
             context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
         inputManager.hideSoftInputFromWindow(windowToken, 0)
+    }
+
+    private fun onLongClick(position: Int): Boolean {
+        val dialogBox = AlertDialog.Builder(this@MainActivity)
+            .setTitle("Delete")
+            .setMessage("Are you sure you want to delete ${storedBoids.toTypedArray()[position]}?")
+            .setPositiveButton(
+                "Yes"
+            ) { d, _ ->
+                val new = ArrayList<String>()
+                storedBoids.forEach {
+                    if (it.isNotBlank()) {
+                        if (storedBoids.elementAt(position) != it) {
+                            new.add(it)
+                        }
+                    }
+                }
+                editorFromSharedPref(this@MainActivity).putStringSet(
+                    USER_BOID_SET,
+                    new.toMutableSet()
+                )
+                binding.rvSavedBoid.adapter?.notifyItemChanged(position)
+                d.dismiss()
+            }
+            .setNegativeButton(
+                "No"
+            ) { dialog, _ -> dialog.dismiss() }
+            .create()
+        dialogBox.show()
+        return true
     }
 }

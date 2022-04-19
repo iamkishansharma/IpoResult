@@ -1,9 +1,11 @@
 package com.heycode.iporesult.utils
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.widget.ImageView
+import androidx.appcompat.app.AppCompatActivity
 import com.bumptech.glide.Glide
 import com.heycode.iporesult.BuildConfig
 import com.heycode.iporesult.R
@@ -15,6 +17,24 @@ const val STORAGE_READ_PERMISSION_CODE = 101
 const val STORAGE_WRITE_PERMISSION_CODE = 102
 const val MY_SHARED_PREFERENCES = "myPref"
 const val IS_DARK_MODE_ON = "IS_DARK_MODE_ON"
+const val USER_BOID_1 = "USER_BOID_1"
+const val USER_BOID_SET = "USER_BOID_SET"
+
+// editor will help to set data
+fun editorFromSharedPref(context: Context): SharedPreferences.Editor {
+    return context.getSharedPreferences(
+        MY_SHARED_PREFERENCES,
+        AppCompatActivity.MODE_PRIVATE
+    ).edit()
+}
+
+// it will help to get data out of Shared Pref
+fun dataFromSharedPref(context: Context): SharedPreferences {
+    return context.getSharedPreferences(
+        MY_SHARED_PREFERENCES,
+        AppCompatActivity.MODE_PRIVATE
+    )
+}
 
 private fun setLogo(context: Context, imageView: ImageView) {
     Glide
@@ -22,7 +42,7 @@ private fun setLogo(context: Context, imageView: ImageView) {
         .load(LOGO_IMG)
         .fitCenter()
         .placeholder(R.drawable.logo2)
-        .into(imageView);
+        .into(imageView)
 }
 
 fun getVersionNameAndCode(): String {
