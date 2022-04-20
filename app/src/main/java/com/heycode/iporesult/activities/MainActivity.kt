@@ -68,11 +68,13 @@ class MainActivity : AppCompatActivity(), BoidAdapter.OnItemClickListener {
             if (dataFromSharedPref(this@MainActivity)
                     .getStringSet(USER_BOID_SET, null) != null
             ) {
+                binding.tvMiddleTitle.visibility = View.VISIBLE
                 storedBoids = dataFromSharedPref(this@MainActivity)
                     .getStringSet(USER_BOID_SET, null) as MutableSet<String>
 
                 binding.apply {
                     if (storedBoids.isNotEmpty()) {
+                        binding.tvMiddleTitle.visibility = View.VISIBLE
                         rvSavedBoid.apply {
                             val myAdapter =
                                 BoidAdapter(storedBoids.toTypedArray(), this@MainActivity)
@@ -81,10 +83,11 @@ class MainActivity : AppCompatActivity(), BoidAdapter.OnItemClickListener {
                             setHasFixedSize(false)
                         }
                     } else {
-                        Toast.makeText(this@MainActivity, "Can not load data", Toast.LENGTH_SHORT)
-                            .show()
+                        binding.tvMiddleTitle.visibility = View.GONE
                     }
                 }
+            }else{
+                binding.tvMiddleTitle.visibility = View.GONE
             }
 
 
