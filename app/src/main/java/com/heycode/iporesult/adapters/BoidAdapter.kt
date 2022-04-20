@@ -6,6 +6,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.heycode.iporesult.R
+import com.heycode.iporesult.databinding.BoidItemBinding
 import de.hdodenhof.circleimageview.CircleImageView
 
 class BoidAdapter(
@@ -13,14 +14,18 @@ class BoidAdapter(
     private val listener: OnItemClickListener,
 ) : RecyclerView.Adapter<BoidAdapter.ViewHolder>() {
 
+
+    interface OnItemClickListener {
+        fun onItemClick(position: Int)
+        fun onItemLongClick(position: Int)
+    }
+
     // create new views
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         // inflates the card_view_design view
         // that is used to hold list item
-        val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.boid_item, parent, false)
-
-        return ViewHolder(view)
+        val binding = BoidItemBinding.inflate(LayoutInflater.from(parent.context),parent,false)
+        return ViewHolder(binding)
     }
 
     // binds the list items to a view
@@ -29,17 +34,15 @@ class BoidAdapter(
         val item1 = names[position]
 
         // sets the image to the imageview from our itemHolder class
-        holder.image.setImageResource(R.drawable.logo)
-//        Glide
-//            .with(context)
-//            .load(LOGO_IMG)
-//            .fitCenter()
+        holder.apply {
+            image.setImageResource(R.drawable.logo)
+            title.text = item1
+            subtitle.text = item1
+        }
+//        Glide.with(context).load(LOGO_IMG).fitCenter()
 //            .placeholder(R.drawable.logo)
 //            .into(holder.image)
 
-        // sets the text to the textview from our itemHolder class
-        holder.title.text = item1
-        holder.subtitle.text = item1
     }
 
     // return the number of the items in the list
@@ -48,19 +51,14 @@ class BoidAdapter(
     }
 
     // Holds the views for adding it to image and text
-    inner class ViewHolder(ItemView: View) : RecyclerView.ViewHolder(ItemView) {
-        val image: CircleImageView = ItemView.findViewById(R.id.ivBoidPic)
-        val title: TextView = ItemView.findViewById(R.id.tvBoidTitle)
-        val subtitle: TextView = ItemView.findViewById(R.id.tvBoidSubtitle)
+    inner class ViewHolder(binding: BoidItemBinding) : RecyclerView.ViewHolder(binding.root),View.OnClickListener {
+        val image: CircleImageView = binding.ivBoidPic
+        val title: TextView = binding.tvBoidTitle
+        val subtitle: TextView =  binding.tvBoidSubtitle
 
         init {
-            ItemView.setOnClickListener {
-                val position = adapterPosition
-                if (position != RecyclerView.NO_POSITION) {
-                    listener.onItemClick(position)
-                }
-            }
-            ItemView.setOnLongClickListener {
+            binding.clRecentItem.setOnClickListener (this)
+            binding.clRecentItem.setOnLongClickListener {
                 val position = adapterPosition
                 if (position != RecyclerView.NO_POSITION) {
                     listener.onItemLongClick(position)
@@ -68,10 +66,12 @@ class BoidAdapter(
                 return@setOnLongClickListener true
             }
         }
-    }
 
-    interface OnItemClickListener {
-        fun onItemClick(position: Int)
-        fun onItemLongClick(position: Int)
+        override fun onClick(p0: View?) {
+            val position = adapterPosition
+            if (position != RecyclerView.NO_POSITION) {
+                listener.onItemClick(position)
+            }
+        }
     }
 }

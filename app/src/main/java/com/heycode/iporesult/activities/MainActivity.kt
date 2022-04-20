@@ -71,8 +71,6 @@ class MainActivity : AppCompatActivity(), BoidAdapter.OnItemClickListener {
                 storedBoids = dataFromSharedPref(this@MainActivity)
                     .getStringSet(USER_BOID_SET, null) as MutableSet<String>
 
-
-//    storedBoids = arrayOf("1301630000134578","1301590000282887")
                 binding.apply {
                     if (storedBoids.isNotEmpty()) {
                         rvSavedBoid.apply {
@@ -80,6 +78,7 @@ class MainActivity : AppCompatActivity(), BoidAdapter.OnItemClickListener {
                                 BoidAdapter(storedBoids.toTypedArray(), this@MainActivity)
                             adapter = myAdapter
                             layoutManager = LinearLayoutManager(this@MainActivity)
+                            setHasFixedSize(false)
                         }
                     } else {
                         Toast.makeText(this@MainActivity, "Can not load data", Toast.LENGTH_SHORT)
@@ -157,7 +156,7 @@ class MainActivity : AppCompatActivity(), BoidAdapter.OnItemClickListener {
     }
 
     override fun onItemClick(position: Int) {
-        Toast.makeText(this, "hhhhh", Toast.LENGTH_SHORT).show()
+//        Toast.makeText(this, "hhhhh", Toast.LENGTH_SHORT).show()
         binding.tietBoid.setText(storedBoids.toTypedArray()[position])
     }
 
@@ -241,19 +240,13 @@ class MainActivity : AppCompatActivity(), BoidAdapter.OnItemClickListener {
             .setPositiveButton(
                 "Yes"
             ) { d, _ ->
-                val new = ArrayList<String>()
-                storedBoids.forEach {
-                    if (it.isNotBlank()) {
-                        if (storedBoids.elementAt(position) != it) {
-                            new.add(it)
-                        }
-                    }
-                }
+                storedBoids.remove(storedBoids.elementAt(position))
                 editorFromSharedPref(this@MainActivity).putStringSet(
                     USER_BOID_SET,
-                    new.toMutableSet()
+                    storedBoids
                 )
-                binding.rvSavedBoid.adapter?.notifyItemChanged(position)
+                val ss= BoidAdapter(storedBoids.toTypedArray(), this@MainActivity)
+                binding.rvSavedBoid.adapter = ss
                 d.dismiss()
             }
             .setNegativeButton(
