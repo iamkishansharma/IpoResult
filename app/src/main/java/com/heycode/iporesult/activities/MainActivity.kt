@@ -12,7 +12,6 @@ import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
-import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
@@ -86,40 +85,12 @@ class MainActivity : AppCompatActivity(), BoidAdapter.OnItemClickListener {
                         binding.tvMiddleTitle.visibility = View.GONE
                     }
                 }
-            }else{
+            } else {
                 binding.tvMiddleTitle.visibility = View.GONE
             }
 
-
-            lifecycleScope.launch {
-                homeViewModel.getHome()
-                homeViewModel.homeContent.observe(this@MainActivity) { data ->
-                    companies = data.body.companyShareList
-                    captchaData = data.body.captchaData
-                    binding.apply {
-                        clError.visibility = View.GONE
-                        pbLoading.visibility = View.GONE
-                        btnSubmit.visibility = View.VISIBLE
-                        svMainContainer.visibility = View.VISIBLE
-                    }
-
-                    // get names
-                    companies.forEach {
-                        compNames.add(it.name)
-                        compHash[it.name] = it.id.toString()
-                    }
-                    val ad = ArrayAdapter(
-                        this@MainActivity,
-                        android.R.layout.simple_spinner_dropdown_item,
-                        compNames.asReversed()
-                    )
-                    binding.actMainSelect.apply {
-                        setAdapter(ad)
-                    }
-                    // set captcha
-                    setCaptcha(captchaData.captcha)
-                }
-            }
+            // load data
+            loadCompanyNames()
 
             binding.apply {
                 btnSubmit.setOnClickListener {
@@ -154,6 +125,38 @@ class MainActivity : AppCompatActivity(), BoidAdapter.OnItemClickListener {
                         }
                     }
                 }
+            }
+        }
+    }
+
+    private fun loadCompanyNames() {
+        lifecycleScope.launch {
+            homeViewModel.getHome()
+            homeViewModel.homeContent.observe(this@MainActivity) { data ->
+                companies = data.body.companyShareList
+                captchaData = data.body.captchaData
+                binding.apply {
+                    clError.visibility = View.GONE
+                    pbLoading.visibility = View.GONE
+                    btnSubmit.visibility = View.VISIBLE
+                    svMainContainer.visibility = View.VISIBLE
+                }
+
+                // get names
+                companies.forEach {
+                    compNames.add(it.name)
+                    compHash[it.name] = it.id.toString()
+                }
+                val ad = ArrayAdapter(
+                    this@MainActivity,
+                    android.R.layout.simple_spinner_dropdown_item,
+                    compNames.asReversed()
+                )
+                binding.actMainSelect.apply {
+                    setAdapter(ad)
+                }
+                // set captcha
+                setCaptcha(captchaData.captcha)
             }
         }
     }
@@ -248,7 +251,7 @@ class MainActivity : AppCompatActivity(), BoidAdapter.OnItemClickListener {
                     USER_BOID_SET,
                     storedBoids
                 )
-                val ss= BoidAdapter(storedBoids.toTypedArray(), this@MainActivity)
+                val ss = BoidAdapter(storedBoids.toTypedArray(), this@MainActivity)
                 binding.rvSavedBoid.adapter = ss
                 d.dismiss()
             }
