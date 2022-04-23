@@ -4,9 +4,7 @@ import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import android.content.res.ColorStateList
-import android.graphics.BitmapFactory
 import android.os.Bundle
-import android.util.Base64
 import android.util.Log
 import android.view.View
 import android.view.inputmethod.InputMethodManager
@@ -21,7 +19,7 @@ import com.heycode.iporesult.R
 import com.heycode.iporesult.adapters.BoidAdapter
 import com.heycode.iporesult.databinding.ActivityMainBinding
 import com.heycode.iporesult.models.CaptchaData
-import com.heycode.iporesult.models.CheckData
+import com.heycode.iporesult.models.CheckRequest
 import com.heycode.iporesult.models.CompanyShare
 import com.heycode.iporesult.utils.USER_BOID_SET
 import com.heycode.iporesult.utils.dataFromSharedPref
@@ -52,7 +50,6 @@ class MainActivity : AppCompatActivity(), BoidAdapter.OnItemClickListener {
 //        window.statusBarColor = resources.getColor(android.R.color.transparent, null)
         supportActionBar?.title = "IPO Result"
         if (!hasInternetConnection(this@MainActivity)) {
-
             binding.apply {
                 pbLoading.visibility = View.GONE
                 btnSubmit.visibility = View.GONE
@@ -94,17 +91,14 @@ class MainActivity : AppCompatActivity(), BoidAdapter.OnItemClickListener {
 
             binding.apply {
                 btnSubmit.setOnClickListener {
-                    if (!hasError(actMainSelect, tietBoid, tietCaptchaCode)) {
+                    if (!hasError(actMainSelect, tietBoid)) {
                         // hide keyboard
                         it.hideKeyboard()
 
-                        val json = CheckData(
+                        val json = CheckRequest(
                             compHash[actMainSelect.text.toString()].toString(),
                             tietBoid.text.toString(),
-                            tietCaptchaCode.text.toString(),
-                            captchaData.captchaIdentifier
                         )
-                        Log.d("JsonData", json.toString())
                         lifecycleScope.launch {
                             binding.pbLoading.visibility = View.VISIBLE
                             binding.svMainContainer.visibility = View.GONE
@@ -112,16 +106,15 @@ class MainActivity : AppCompatActivity(), BoidAdapter.OnItemClickListener {
                             homeViewModel.checkResult(json)
 
                             val msg = homeViewModel.message.value.toString()
+
+                            Log.d("JsonData", "${json}\n+${msg}")
                             startActivity(
                                 Intent(this@MainActivity, ResultActivity::class.java)
                                     .apply {
-                                        putExtra(
-                                            "msg",
-                                            msg
-                                        )
+                                        putExtra("msg", msg)
                                         putExtra("boid", json.boid)
                                     })
-                            finish()
+
                         }
                     }
                 }
@@ -129,6 +122,12 @@ class MainActivity : AppCompatActivity(), BoidAdapter.OnItemClickListener {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        binding.pbLoading.visibility = View.GONE
+        binding.svMainContainer.visibility = View.VISIBLE
+        binding.btnSubmit.visibility = View.VISIBLE
+    }
     private fun loadCompanyNames() {
         lifecycleScope.launch {
             homeViewModel.getHome()
@@ -155,14 +154,11 @@ class MainActivity : AppCompatActivity(), BoidAdapter.OnItemClickListener {
                 binding.actMainSelect.apply {
                     setAdapter(ad)
                 }
-                // set captcha
-                setCaptcha(captchaData.captcha)
             }
         }
     }
 
     override fun onItemClick(position: Int) {
-//        Toast.makeText(this, "hhhhh", Toast.LENGTH_SHORT).show()
         binding.tietBoid.setText(storedBoids.toTypedArray()[position])
     }
 
@@ -172,16 +168,20 @@ class MainActivity : AppCompatActivity(), BoidAdapter.OnItemClickListener {
 
     private fun hasError(
         t1: AutoCompleteTextView,
-        t2: TextInputEditText,
-        t3: TextInputEditText
+        t2: TextInputEditText
     ): Boolean {
         if (t1.text.trim().isEmpty()) {
             t1.error = "Required"
             return true
+        } else {
+            t1.error = null
         }
+
         if (t2.text!!.trim().isEmpty()) {
             t2.error = "Required"
             return true
+        } else {
+            t2.error = null
         }
         if (t2.text.toString().length != 16) {
             binding.tilBox2.apply {
@@ -189,31 +189,19 @@ class MainActivity : AppCompatActivity(), BoidAdapter.OnItemClickListener {
                 setHelperTextColor(ColorStateList.valueOf(resources.getColor(R.color.red, null)))
             }
             return true
+        } else {
+            t1.error = null
         }
         if (!t2.text.toString().matches(Regex("^(130).*$"))) {
             t2.error = "BOID is wrong"
             return true
-        }
-
-        if (t3.text!!.trim().isEmpty()) {
-            t3.error = "Required"
-            return true
-        }
-        if (t3.text.toString().length > 5 || t3.text.toString().length < 5) {
-            binding.tilBox3.apply {
-                helperText = "Wrong captcha"
-                setHelperTextColor(ColorStateList.valueOf(resources.getColor(R.color.red, null)))
-            }
-            return true
+        } else {
+            t2.error = null
         }
         return false
+
     }
 
-    private fun setCaptcha(imageString: String) {
-        val imageBytes = Base64.decode(imageString, Base64.DEFAULT)
-        val decodedImage = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
-        binding.ivCaptcha.setImageBitmap(decodedImage)
-    }
 
     override fun onBackPressed() {
         val diaBox = askOption()

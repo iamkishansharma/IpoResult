@@ -1,31 +1,39 @@
 package com.heycode.iporesult.di
 
+import com.heycode.iporesult.BuildConfig
 import com.heycode.iporesult.api.HomeApi
-import com.heycode.iporesult.utils.BASE_URL
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
 
 
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
-    // will inject retrofit instance for network call
+
+    // will inject retrofit instance into HomeApi
     @Provides
     @Singleton
-    fun provideRetrofit(): Retrofit = Retrofit.Builder()
-        .baseUrl(BASE_URL)
-        .addConverterFactory(GsonConverterFactory.create())
-        .build()
+    fun provideRetrofit(): Retrofit {
+        val client = OkHttpClient.Builder()
+            .readTimeout(60, TimeUnit.SECONDS)
+            .build()
+        return Retrofit.Builder()
+            .baseUrl(BuildConfig.BASE_URL)
+            .client(client)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+    }
 
-    // will inject api at repository
+    // give api access to Repository
     @Provides
     @Singleton
-    fun provideHomeApi(retrofit: Retrofit): HomeApi =
-        retrofit.create(HomeApi::class.java)
-
+    fun provideHomeApi(retrofit1: Retrofit): HomeApi =
+        retrofit1.create(HomeApi::class.java)
 }
