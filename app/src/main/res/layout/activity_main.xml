@@ -111,7 +111,7 @@
         android:layout_margin="16dp"
         android:background="@drawable/btn_shape"
         android:text="Submit"
-        android:visibility="visible"
+        android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />

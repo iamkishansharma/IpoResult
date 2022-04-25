@@ -5,6 +5,7 @@ import android.graphics.Color
 import android.os.Bundle
 import android.view.MenuItem
 import android.widget.Toast
+import androidx.activity.addCallback
 import androidx.appcompat.app.AppCompatActivity
 import com.heycode.iporesult.R
 import com.heycode.iporesult.databinding.ActivityResultBinding
@@ -41,10 +42,11 @@ class ResultActivity : AppCompatActivity() {
                 setHomeAsUpIndicator(R.drawable.ic_arrow_back)
             }
             // back press
-//            onBackPressedDispatcher.addCallback(this) {
-//                onBackPressed()
-//                // Handle the back button event
-//            }
+            onBackPressedDispatcher.addCallback(this) {
+                // Handle the back button event
+                finish()
+                startActivity(Intent(this@ResultActivity, MainActivity::class.java))
+            }
             // config animation
             val party = Party(
                 colors = listOf(Color.YELLOW, Color.RED, Color.CYAN, Color.GREEN, Color.MAGENTA),

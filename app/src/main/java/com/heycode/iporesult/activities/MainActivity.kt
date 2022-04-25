@@ -51,9 +51,9 @@ class MainActivity : AppCompatActivity(), BoidAdapter.OnItemClickListener {
         supportActionBar?.title = "IPO Result"
         if (!hasInternetConnection(this@MainActivity)) {
             binding.apply {
+                svMainContainer.visibility = View.GONE
                 pbLoading.visibility = View.GONE
                 btnSubmit.visibility = View.GONE
-                svMainContainer.visibility = View.GONE
                 clError.visibility = View.VISIBLE
                 btnRetryError.setOnClickListener {
                     finish()
@@ -114,7 +114,7 @@ class MainActivity : AppCompatActivity(), BoidAdapter.OnItemClickListener {
                                         putExtra("msg", msg)
                                         putExtra("boid", json.boid)
                                     })
-
+                            finish()
                         }
                     }
                 }
@@ -122,12 +122,6 @@ class MainActivity : AppCompatActivity(), BoidAdapter.OnItemClickListener {
         }
     }
 
-    override fun onResume() {
-        super.onResume()
-        binding.pbLoading.visibility = View.GONE
-        binding.svMainContainer.visibility = View.VISIBLE
-        binding.btnSubmit.visibility = View.VISIBLE
-    }
     private fun loadCompanyNames() {
         lifecycleScope.launch {
             homeViewModel.getHome()
