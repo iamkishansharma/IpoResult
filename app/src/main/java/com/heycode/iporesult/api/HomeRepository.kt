@@ -17,7 +17,6 @@ class HomeRepository @Inject constructor(
         return try {
             val response = api.getHome()
             val data = response.body()
-
             if (response.isSuccessful && data != null) {
                 Resources.Success(data, "Successful")
             } else {

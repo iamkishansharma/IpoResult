@@ -35,9 +35,11 @@ class HomeViewModel @Inject constructor(
             when (val response = repository.getHome()) {
                 is Resources.Success -> {
                     homeMutableLiveData.value = response.data!!
+                    println(response.data.body.toString()+"Kishansaaa")
                     messageMutableLiveData.value = response.message!!
                 }
                 is Resources.Error -> {
+                    println(response.data.toString() +"Errrorrrrrrrr")
                     messageMutableLiveData.value = response.message!!
                 }
             }
